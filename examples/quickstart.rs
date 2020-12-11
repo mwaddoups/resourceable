@@ -76,7 +76,7 @@ impl Resourceable<Database, i32> for Spaceship {
         }
     }
 
-    async fn delete(db: &Database, id: i32) -> anyhow::Result<Spaceship> {
+    async fn remove(db: &Database, id: i32) -> anyhow::Result<Spaceship> {
         let data = &mut *db.lock().unwrap();
 
         let mut index_to_remove: Option<usize> = None;

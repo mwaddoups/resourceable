@@ -43,6 +43,10 @@ impl Resourceable<Database, i32> for Spaceship {
     async fn update(db: &Database, id: i32, new_spaceship: Spaceship) -> anyhow::Result<Spaceship> {
         // Replace the spaceship at id with a new spaceship
     }
+
+    async fn remove(db: &Database, id: i32, new_spaceship: Spaceship) -> anyhow::Result<Spaceship> {
+        // Remove the spaceship at id
+    }
 }
 
 #[async_std::main]

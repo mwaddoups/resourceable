@@ -69,6 +69,13 @@ pub trait Resourceable<S, I>: Sized + Serialize + DeserializeOwned + Send + Sync
         build_json_response(&changed_resource)
     }
 
+    async fn delete(mut req: Request<S>) -> tide::Result {
+        let id = req.param("id").unwrap().parse().unwrap();
+        let changed_resource = Self::remove(req.state(), id).await?;
+
+        build_json_response(&changed_resource)
+    }
+
     async fn read_by_id(_state: &S, _id: I) -> anyhow::Result<Self> {
         Err(anyhow!("Resource not accessible by id"))
     }
@@ -85,7 +92,7 @@ pub trait Resourceable<S, I>: Sized + Serialize + DeserializeOwned + Send + Sync
         Err(anyhow!("Resource not updateable!"))
     }
 
-    async fn delete(_state: &S, _id: I) -> anyhow::Result<Self> {
+    async fn remove(_state: &S, _id: I) -> anyhow::Result<Self> {
         Err(anyhow!("Resource not deleteable!"))
     }
 }
@@ -103,6 +110,8 @@ macro_rules! add_resource {
         $app.at($endpoint).get(<$resource>::get_all);
         $app.at(&($endpoint.to_string() + "/:id")).get(<$resource>::get);
         $app.at($endpoint).post(<$resource>::post);
+        $app.at($endpoint).put(<$resource>::put);
+        $app.at($endpoint).delete(<$resource>::delete);
     )
 }
 
