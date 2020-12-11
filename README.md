@@ -68,9 +68,9 @@ async fn main() -> tide::Result<()> {
 
 # Examples
 
-- [examples/quickstart.rs] - A quick example with in-memory database.
+- [](examples/quickstart.rs) - A quick example with in-memory database.
+- [](examples/sqlx-postgres) - A full example showing an implementation with SQLx.
 
 # TODO
 
 - Write some tests.
-- Add example using SQLx.
