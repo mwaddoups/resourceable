@@ -13,7 +13,7 @@ use resourceable::{Resourceable, add_resource};
 */
 #[derive(Serialize, Deserialize, Clone)]
 struct Spaceship {
-    id: i32,
+    id: Option<i32>,
     num_thrusters: u8,
     name: String,
 }
@@ -30,7 +30,7 @@ impl Resourceable<Database, i32> for Spaceship {
     async fn read_by_id(db: &Database, id: i32) -> anyhow::Result<Spaceship> {
         let data = & *db.lock().unwrap();
         for spaceship in data {
-            if spaceship.id == id { return Ok(spaceship.clone()); }
+            if spaceship.id == Some(id) { return Ok(spaceship.clone()); }
         }
 
         Err(anyhow!("No spaceship found!"))
@@ -46,17 +46,51 @@ impl Resourceable<Database, i32> for Spaceship {
     async fn create(db: &Database, new_spaceship: Spaceship) -> anyhow::Result<Spaceship> {
         let data = &mut *db.lock().unwrap();
 
-        data.push(new_spaceship.clone());
+        let max_id = data.iter().map(|x| x.id).max().unwrap().unwrap();
+        let mut inserted_spaceship = new_spaceship.clone();
+        inserted_spaceship.id = Some(max_id + 1);
+
+        data.push(inserted_spaceship);
 
         Ok(new_spaceship)
     }
 
-    async fn update(db: &Database, new_spaceship: Spaceship) -> anyhow::Result<Spaceship> {
+    async fn update(db: &Database, id: i32, new_spaceship: Spaceship) -> anyhow::Result<Spaceship> {
         let data = &mut *db.lock().unwrap();
 
-        data.push(new_spaceship.clone());
+        let mut index_to_update: Option<usize> = None;
 
-        Ok(new_spaceship)
+        for i in 0..data.len() {
+            if data[i].id == Some(id) { 
+                index_to_update = Some(i);
+                break;
+            }
+        }
+
+        match index_to_update {
+            Some(index) => {
+                data[index] = new_spaceship.clone();
+                Ok(new_spaceship)
+            },
+            None => Err(anyhow!("No matching ID found to update.")),
+        }
+    }
+
+    async fn delete(db: &Database, id: i32) -> anyhow::Result<Spaceship> {
+        let data = &mut *db.lock().unwrap();
+
+        let mut index_to_remove: Option<usize> = None;
+        let mut removed_ship: Option<Spaceship> = None;
+        for i in 0..data.len() {
+            if data[i].id == Some(id) { 
+                removed_ship = Some(data[i].clone());
+                index_to_remove = Some(i);
+                break;
+            }
+        }
+
+        data.remove(index_to_remove.unwrap());
+        Ok(removed_ship.unwrap())
     }
 }
 
@@ -64,8 +98,8 @@ impl Resourceable<Database, i32> for Spaceship {
 async fn main() -> tide::Result<()> {
     // Setup the database
     let db: Database = Arc::new(Mutex::new(vec![
-        Spaceship { id: 1, num_thrusters: 4, name: "SS Small".to_string() },
-        Spaceship { id: 2, num_thrusters: 35, name: "Thrusty McThrust".to_string() },
+        Spaceship { id: Some(1), num_thrusters: 4, name: "SS Small".to_string() },
+        Spaceship { id: Some(2), num_thrusters: 35, name: "Thrusty McThrust".to_string() },
     ]));
 
     // Pass the DB as the state
