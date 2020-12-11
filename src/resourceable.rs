@@ -69,7 +69,7 @@ pub trait Resourceable<S, I>: Sized + Serialize + DeserializeOwned + Send + Sync
         build_json_response(&changed_resource)
     }
 
-    async fn delete(mut req: Request<S>) -> tide::Result {
+    async fn delete(req: Request<S>) -> tide::Result {
         let id = req.param("id").unwrap().parse().unwrap();
         let changed_resource = Self::remove(req.state(), id).await?;
 
@@ -107,11 +107,12 @@ fn build_json_response<T: Serialize>(resource: &T) -> tide::Result {
 #[macro_export]
 macro_rules! add_resource {
     ($app:ident, $endpoint:expr, $resource:ty) => (
+        let id_endpoint = &($endpoint.to_string() + "/:id");
         $app.at($endpoint).get(<$resource>::get_all);
-        $app.at(&($endpoint.to_string() + "/:id")).get(<$resource>::get);
+        $app.at(id_endpoint).get(<$resource>::get);
         $app.at($endpoint).post(<$resource>::post);
-        $app.at($endpoint).put(<$resource>::put);
-        $app.at($endpoint).delete(<$resource>::delete);
+        $app.at(id_endpoint).put(<$resource>::put);
+        $app.at(id_endpoint).delete(<$resource>::delete);
     )
 }
 

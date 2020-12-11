@@ -70,7 +70,7 @@ impl Resourceable<PgPool, i32> for Spaceship {
         Ok(res)
     }
 
-    async fn delete(pool: &PgPool, id: i32) -> anyhow::Result<Spaceship> {
+    async fn remove(pool: &PgPool, id: i32) -> anyhow::Result<Spaceship> {
         let res = sqlx::query_as(
             r#"
                 DELETE FROM spaceship
