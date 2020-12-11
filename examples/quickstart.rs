@@ -50,9 +50,9 @@ impl Resourceable<Database, i32> for Spaceship {
         let mut inserted_spaceship = new_spaceship.clone();
         inserted_spaceship.id = Some(max_id + 1);
 
-        data.push(inserted_spaceship);
+        data.push(inserted_spaceship.clone());
 
-        Ok(new_spaceship)
+        Ok(inserted_spaceship)
     }
 
     async fn update(db: &Database, id: i32, new_spaceship: Spaceship) -> anyhow::Result<Spaceship> {

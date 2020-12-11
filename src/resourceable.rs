@@ -5,6 +5,7 @@ use serde::{Serialize, Deserialize};
 use serde::de::DeserializeOwned;
 use std::str::FromStr;
 use std::fmt::Debug;
+use http_types::{Body, Response, StatusCode};
 
 /// An internal struct used for extracting page requests from requests.
 #[derive(Deserialize)]
@@ -40,34 +41,32 @@ pub trait Resourceable<S, I>: Sized + Serialize + DeserializeOwned + Send + Sync
     async fn get(req: Request<S>) -> tide::Result {
         let id = req.param("id").unwrap().parse().unwrap();
         let resource = Self::read_by_id(req.state(), id).await?;
-        let json = serde_json::to_string(&resource).unwrap();
-        
-        Ok(json.into())
+
+        build_json_response(&resource)
     }
 
     async fn get_all(req: Request<S>) -> tide::Result {
         let page: Page = req.query()?;
         let resource = Self::read_paged(req.state(), page.size, page.offset).await?;
-        let json = serde_json::to_string(&resource).unwrap();
         
-        Ok(json.into())
+        build_json_response(&resource)
     }
 
     async fn post(mut req: Request<S>) -> tide::Result {
         let request_resource: Self = req.body_json().await?;
 
         let new_resource = Self::create(req.state(), request_resource).await?;
-        let json = serde_json::to_string(&new_resource).unwrap();
-        Ok(json.into())
+
+        build_json_response(&new_resource)
     }
 
     async fn put(mut req: Request<S>) -> tide::Result {
         let id = req.param("id").unwrap().parse().unwrap();
         let request_resource: Self = req.body_json().await?;
 
-        let new_resource = Self::update(req.state(), id, request_resource).await?;
-        let json = serde_json::to_string(&new_resource).unwrap();
-        Ok(json.into())
+        let changed_resource = Self::update(req.state(), id, request_resource).await?;
+
+        build_json_response(&changed_resource)
     }
 
     async fn read_by_id(_state: &S, _id: I) -> anyhow::Result<Self> {
@@ -90,6 +89,13 @@ pub trait Resourceable<S, I>: Sized + Serialize + DeserializeOwned + Send + Sync
         Err(anyhow!("Resource not deleteable!"))
     }
 }
+
+fn build_json_response<T: Serialize>(resource: &T) -> tide::Result {
+    let mut res = Response::new(StatusCode::Ok);
+    res.set_body(Body::from_json(&resource)?);
+    Ok(res.into())
+}
+
 
 #[macro_export]
 macro_rules! add_resource {
