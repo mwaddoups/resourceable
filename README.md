@@ -1,6 +1,6 @@
 # Resourceable
 
-A simple crate for quickly writing REST APIs for resources that can be described as structs. This is built on top of [http-rs/tide](https://github.com/http-rs/tide).
+A simple proof-of-concept crate for quickly writing REST APIs for resources that can be described as structs. This is built on top of [http-rs/tide](https://github.com/http-rs/tide).
 
 # Motivation
 
